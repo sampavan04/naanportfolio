@@ -1,0 +1,120 @@
+// Utilities
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+const els = {
+  form: $('#loginForm'),
+  email: $('#email'),
+  emailError: $('#emailError'),
+  pwd: $('#password'),
+  pwdError: $('#passwordError'),
+  togglePwd: $('#togglePwd'),
+  forgot: $('#forgotLink'),
+  remember: $('#remember'),
+  loginBtn: $('#loginBtn'),
+  year: $('#year'),
+};
+
+els.year.textContent = new Date().getFullYear();
+
+// Password visibility
+els.togglePwd.addEventListener('click', () => {
+  const showing = els.pwd.getAttribute('type') === 'text';
+  els.pwd.setAttribute('type', showing ? 'password' : 'text');
+  els.togglePwd.setAttribute('aria-pressed', String(!showing));
+  els.togglePwd.textContent = showing ? 'Show' : 'Hide';
+  els.pwd.focus();
+});
+
+// Simple client-side validation helpers
+const isNMId = (v) => /^NM\d{2}[A-Z0-9]{4,}$/i.test(v.trim());
+const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+function validateEmailLike(value){
+  if(!value.trim()){
+    return 'Please enter your email or NM ID.';
+  }
+  if(!(isEmail(value) || isNMId(value))){
+    return 'Enter a valid email (name@domain) or NM ID (e.g., NM23XXXX).';
+  }
+  return '';
+}
+
+function validatePassword(value){
+  if(!value.trim()){
+    return 'Password is required.';
+  }
+  if(value.length < 6){
+    return 'Password must be at least 6 characters.';
+  }
+  return '';
+}
+
+// Real-time validation
+els.email.addEventListener('input', () => {
+  els.emailError.textContent = validateEmailLike(els.email.value);
+});
+els.pwd.addEventListener('input', () => {
+  els.pwdError.textContent = validatePassword(els.pwd.value);
+});
+
+// Forgot link (demo)
+els.forgot.addEventListener('click', (e) => {
+  e.preventDefault();
+  const user = els.email.value.trim();
+  if(!user){
+    alert('Enter your email or NM ID, then click Forgot password.');
+    els.email.focus();
+    return;
+  }
+  alert('Password reset link (demo) would be sent to: ' + user);
+});
+
+// Social buttons (demo)
+$$('.social-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const provider = btn.dataset.provider;
+    alert(Demo only: Begin ${provider} OAuth flow.);
+  });
+});
+
+// Submit handler (demo only — replace with real API)
+els.form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // Validate
+  const emailErr = validateEmailLike(els.email.value);
+  const pwdErr = validatePassword(els.pwd.value);
+  els.emailError.textContent = emailErr;
+  els.pwdError.textContent = pwdErr;
+
+  if(emailErr || pwdErr){ return; }
+
+  // Demo "loading" state
+  els.loginBtn.disabled = true;
+  const original = els.loginBtn.textContent;
+  els.loginBtn.textContent = 'Signing in…';
+
+  // Fake latency
+  await new Promise(r => setTimeout(r, 900));
+
+  // Demo auth: accept any inputs that pass validation
+  const remember = els.remember.checked;
+
+  // Store a minimal demo session in localStorage if "remember me"
+  if(remember){
+    localStorage.setItem('nm_demo_session', JSON.stringify({
+      user: els.email.value.trim(),
+      ts: Date.now()
+    }));
+  } else {
+    localStorage.removeItem('nm_demo_session');
+  }
+
+  // In a real app, redirect after successful login
+  alert('Signed in successfully (demo).\nUser: ' + els.email.value.trim());
+  // window.location.href = '/dashboard.html';
+
+  els.loginBtn.disabled = false;
+  els.loginBtn.textContent = original;
+});
